@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import Navbar from '$lib/components/Navbar.svelte'; // Import the Navbar component
+  import Footer from '$lib/components/Footer.svelte'; // Import the Footer component
 
   interface Schedule {
     id: string;
@@ -46,7 +47,59 @@
   });
 </script>
 
-<main class="bg-green-50 min-h-screen text-gray-800">
+<style>
+  /* Table container for horizontal scrolling */
+  .overflow-x-auto {
+    overflow-x: auto;
+  }
+
+  /* Table styling */
+  table {
+    width: 100%;
+    border-collapse: collapse; /* Remove gaps between table cells */
+    border: 1px solid #d1d5db; /* Light gray border */
+    text-align: left;
+    font-size: 0.875rem; /* Small font size */
+  }
+
+  /* Table header styling */
+  thead tr {
+    background-color: #d1fae5; /* Light green background */
+  }
+
+  th {
+    border: 1px solid #d1d5db; /* Light gray border */
+    padding: 0.5rem 1rem; /* Padding for header cells */
+    color: #047857; /* Dark green text */
+    text-transform: uppercase; /* Uppercase text */
+    font-weight: bold;
+  }
+
+  /* Table body styling */
+  td {
+    border: 1px solid #d1d5db; /* Light gray border */
+    padding: 0.5rem 1rem; /* Padding for body cells */
+    color: #374151; /* Dark gray text */
+  }
+
+  /* Hover effect for table rows */
+  tbody tr:hover {
+    background-color: #f0fdf4; /* Very light green background */
+  }
+
+  /* Alternating row colors */
+  tbody tr:nth-child(even) {
+    background-color: #f9fafb; /* Light gray background for even rows */
+  }
+
+  /* Message row styling */
+  td[colspan="3"] {
+    color: #4b5563; /* Medium gray text */
+    font-style: italic;
+  }
+</style>
+
+<main class="bg-green-50 min-h-screen text-gray-800 flex flex-col">
   <!-- Navbar -->
   <Navbar />
 
@@ -63,35 +116,29 @@
     <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-4 sm:p-6">
       <h2 class="text-xl sm:text-2xl font-semibold text-green-800 mb-4">Operating Hours</h2>
       <div class="overflow-x-auto">
-        {#if schedules.length > 0}
-          <table class="w-full border-collapse border border-gray-300 text-left text-sm sm:text-base">
-            <thead>
-              <tr class="bg-green-100">
-                <th class="border border-gray-300 px-2 sm:px-4 py-2 text-green-700">Purpose</th>
-                <th class="border border-gray-300 px-2 sm:px-4 py-2 text-green-700">Date</th>
-                <th class="border border-gray-300 px-2 sm:px-4 py-2 text-green-700">Time</th>
+        <table class="w-full border-collapse border border-gray-300 text-left text-sm sm:text-base">
+          <thead>
+            <tr class="bg-green-100">
+              <th class="border border-gray-300 px-2 sm:px-4 py-2 text-green-700">Purpose</th>
+              <th class="border border-gray-300 px-2 sm:px-4 py-2 text-green-700">Date</th>
+              <th class="border border-gray-300 px-2 sm:px-4 py-2 text-green-700">Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each schedules as schedule}
+              <tr class="hover:bg-green-50">
+                <td class="border border-gray-300 px-2 sm:px-4 py-2">{schedule.purpose}</td>
+                <td class="border border-gray-300 px-2 sm:px-4 py-2">{formatDateWithDay(schedule.date)}</td>
+                <td class="border border-gray-300 px-2 sm:px-4 py-2">{formatTimeToAmPm(schedule.time)}</td>
               </tr>
-            </thead>
-            <tbody>
-              {#each schedules as schedule}
-                <tr class="hover:bg-green-50">
-                  <td class="border border-gray-300 px-2 sm:px-4 py-2">{schedule.purpose}</td>
-                  <td class="border border-gray-300 px-2 sm:px-4 py-2">{formatDateWithDay(schedule.date)}</td>
-                  <td class="border border-gray-300 px-2 sm:px-4 py-2">{formatTimeToAmPm(schedule.time)}</td>
-                </tr>
-                <tr>
-                  <td colspan="3" class="border border-gray-300 px-2 sm:px-4 py-2 text-gray-700">
-                    <strong>Message:</strong> {schedule.message}
-                  </td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
-        {:else}
-          <p class="text-center text-gray-700 text-sm sm:text-base">
-            No schedules available at the moment. Please check back later.
-          </p>
-        {/if}
+              <tr>
+                <td colspan="3" class="border border-gray-300 px-2 sm:px-4 py-2 text-gray-700">
+                  <strong>Message:</strong> {schedule.message}
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
       </div>
     </div>
   </section>
@@ -108,4 +155,7 @@
       </ul>
     </div>
   </section>
+
+  <!-- Footer -->
+  <Footer />
 </main>

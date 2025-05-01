@@ -1,8 +1,9 @@
 <script>
   import Navbar from '$lib/components/Navbar.svelte'; // Import the Navbar component
+  import Footer from '$lib/components/Footer.svelte'; // Import the Footer component
 </script>
 
-<main class="bg-green-50 min-h-screen text-gray-800">
+<main class="bg-green-50 min-h-screen text-gray-800 flex flex-col">
   <!-- Navbar -->
   <Navbar />
 
@@ -54,4 +55,7 @@
       <li>Convenient operating hours to fit your busy schedule.</li>
     </ul>
   </section>
+
+  <!-- Footer -->
+  <Footer />
 </main>
