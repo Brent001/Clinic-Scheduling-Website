@@ -116,29 +116,35 @@
     <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-4 sm:p-6">
       <h2 class="text-xl sm:text-2xl font-semibold text-green-800 mb-4">Operating Hours</h2>
       <div class="overflow-x-auto">
-        <table class="w-full border-collapse border border-gray-300 text-left text-sm sm:text-base">
-          <thead>
-            <tr class="bg-green-100">
-              <th class="border border-gray-300 px-2 sm:px-4 py-2 text-green-700">Purpose</th>
-              <th class="border border-gray-300 px-2 sm:px-4 py-2 text-green-700">Date</th>
-              <th class="border border-gray-300 px-2 sm:px-4 py-2 text-green-700">Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each schedules as schedule}
-              <tr class="hover:bg-green-50">
-                <td class="border border-gray-300 px-2 sm:px-4 py-2">{schedule.purpose}</td>
-                <td class="border border-gray-300 px-2 sm:px-4 py-2">{formatDateWithDay(schedule.date)}</td>
-                <td class="border border-gray-300 px-2 sm:px-4 py-2">{formatTimeToAmPm(schedule.time)}</td>
+        {#if schedules.length > 0}
+          <table class="w-full border-collapse border border-gray-300 text-left text-sm sm:text-base">
+            <thead>
+              <tr class="bg-green-100">
+                <th class="border border-gray-300 px-2 sm:px-4 py-2 text-green-700">Purpose</th>
+                <th class="border border-gray-300 px-2 sm:px-4 py-2 text-green-700">Date</th>
+                <th class="border border-gray-300 px-2 sm:px-4 py-2 text-green-700">Time</th>
               </tr>
-              <tr>
-                <td colspan="3" class="border border-gray-300 px-2 sm:px-4 py-2 text-gray-700">
-                  <strong>Message:</strong> {schedule.message}
-                </td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {#each schedules as schedule}
+                <tr class="hover:bg-green-50">
+                  <td class="border border-gray-300 px-2 sm:px-4 py-2">{schedule.purpose}</td>
+                  <td class="border border-gray-300 px-2 sm:px-4 py-2">{formatDateWithDay(schedule.date)}</td>
+                  <td class="border border-gray-300 px-2 sm:px-4 py-2">{formatTimeToAmPm(schedule.time)}</td>
+                </tr>
+                <tr>
+                  <td colspan="3" class="border border-gray-300 px-2 sm:px-4 py-2 text-gray-700">
+                    <strong>Message:</strong> {schedule.message}
+                  </td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        {:else}
+          <p class="text-center text-gray-700 text-sm sm:text-base py-4">
+            No schedules available at the moment. Please check back later.
+          </p>
+        {/if}
       </div>
     </div>
   </section>
