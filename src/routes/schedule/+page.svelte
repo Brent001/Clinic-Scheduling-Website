@@ -113,8 +113,8 @@
   </section>
 
   <!-- Schedule Section -->
-  <section class="py-8 px-4 sm:py-12 sm:px-6">
-    <div class="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-4 sm:p-6">
+  <section class="py-8 px-2 sm:py-12 sm:px-6">
+    <div class="max-w-full sm:max-w-6xl mx-auto bg-white rounded-lg shadow-md p-2 sm:p-6">
       <h2 class="text-xl sm:text-2xl font-semibold text-green-800 mb-4">Operating Hours</h2>
       <div class="overflow-x-auto">
         {#if schedules.length > 0}
