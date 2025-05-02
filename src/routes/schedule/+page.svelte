@@ -95,7 +95,8 @@
   /* Message row styling */
   td[colspan="3"] {
     color: #4b5563; /* Medium gray text */
-    font-style: italic;
+    white-space: pre-wrap; /* Preserve whitespace and line breaks */
+    word-wrap: break-word; /* Break long words if necessary */
   }
 </style>
 
