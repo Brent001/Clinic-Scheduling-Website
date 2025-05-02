@@ -114,7 +114,7 @@
 
   <!-- Schedule Section -->
   <section class="py-8 px-4 sm:py-12 sm:px-6">
-    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-4 sm:p-6">
+    <div class="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-4 sm:p-6">
       <h2 class="text-xl sm:text-2xl font-semibold text-green-800 mb-4">Operating Hours</h2>
       <div class="overflow-x-auto">
         {#if schedules.length > 0}
@@ -128,14 +128,25 @@
             </thead>
             <tbody>
               {#each schedules as schedule}
-                <tr class="hover:bg-green-50">
-                  <td class="border border-gray-300 px-2 sm:px-4 py-2">{schedule.purpose}</td>
-                  <td class="border border-gray-300 px-2 sm:px-4 py-2">{formatDateWithDay(schedule.date)}</td>
-                  <td class="border border-gray-300 px-2 sm:px-4 py-2">{formatTimeToAmPm(schedule.time)}</td>
-                </tr>
-                <tr>
-                  <td colspan="3" class="border border-gray-300 px-2 sm:px-4 py-2 text-gray-700">
-                    <strong>Message:</strong> {schedule.message}
+                <!-- Schedule Group -->
+                <tr class="border border-black">
+                  <td colspan="3" class="p-0">
+                    <!-- Schedule Row -->
+                    <table class="w-full border-collapse">
+                      <tbody>
+                        <tr class="hover:bg-green-50 even:bg-gray-50">
+                          <td class="border border-gray-300 px-2 sm:px-4 py-2">{schedule.purpose}</td>
+                          <td class="border border-gray-300 px-2 sm:px-4 py-2">{formatDateWithDay(schedule.date)}</td>
+                          <td class="border border-gray-300 px-2 sm:px-4 py-2">{formatTimeToAmPm(schedule.time)}</td>
+                        </tr>
+                        <!-- Message Row -->
+                        <tr class="bg-gray-100">
+                          <td colspan="3" class="border border-gray-300 px-2 sm:px-4 py-4 text-gray-700">
+                            <strong>Message:</strong> {schedule.message}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </td>
                 </tr>
               {/each}
@@ -152,7 +163,7 @@
 
   <!-- Additional Information -->
   <section class="py-8 px-4 sm:py-12 sm:px-6">
-    <div class="max-w-4xl mx-auto bg-green-100 rounded-lg shadow-md p-4 sm:p-6">
+    <div class="max-w-6xl mx-auto bg-green-100 rounded-lg shadow-md p-4 sm:p-6">
       <h2 class="text-xl sm:text-2xl font-semibold text-green-800 mb-4">Important Reminders</h2>
       <ul class="list-disc list-inside text-sm sm:text-base text-gray-700 space-y-2">
         <li>Please bring your student or faculty ID for verification.</li>
