@@ -1,49 +1,60 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import Navbar from '$lib/components/Navbar.svelte'; // Import the Navbar component
-  import Footer from '$lib/components/Footer.svelte'; // Import the Footer component
+  import Navbar from '$lib/components/Navbar.svelte';
+  import Footer from '$lib/components/Footer.svelte';
 
   interface Schedule {
     id: string;
     purpose: string;
     date: string; // Expected format: YYYY-MM-DD
-    time: string;
+    time: string; // Expected format: HH:mm (24-hour format)
     message: string;
   }
 
-  let schedules: Schedule[] = []; // Array to store fetched schedules
+  let schedules: Schedule[] = [];
 
   // Helper function to format time to AM/PM
   function formatTimeToAmPm(time: string): string {
     const [hours, minutes] = time.split(':').map(Number);
     const period = hours >= 12 ? 'PM' : 'AM';
-    const formattedHours = hours % 12 || 12; // Convert 0 to 12 for 12-hour format
+    const formattedHours = hours % 12 || 12;
     return `${formattedHours}:${minutes.toString().padStart(2, '0')} ${period}`;
   }
 
   // Helper function to format date with day of the week and month name
   function formatDateWithDay(date: string): string {
     const options: Intl.DateTimeFormatOptions = {
-      weekday: 'long', // Full name of the day (e.g., Monday)
+      weekday: 'long',
       year: 'numeric',
-      month: 'long', // Full name of the month (e.g., January)
+      month: 'long',
       day: 'numeric',
     };
     return new Date(date).toLocaleDateString('en-US', options);
   }
 
-  // Fetch schedules from the backend
-  onMount(async () => {
+  // Fetch schedules from the backend and sort them
+  async function fetchSchedules() {
     try {
       const response = await fetch('/api/schedules');
       if (response.ok) {
         schedules = await response.json();
+
+        // Sort schedules by date and time in descending order
+        schedules.sort((a, b) => {
+          const dateA = new Date(`${a.date}T${a.time}`);
+          const dateB = new Date(`${b.date}T${b.time}`);
+          return dateB.getTime() - dateA.getTime();
+        });
       } else {
         console.error('Failed to fetch schedules');
       }
     } catch (error) {
       console.error('Error fetching schedules:', error);
     }
+  }
+
+  onMount(() => {
+    fetchSchedules();
   });
 </script>
 
