@@ -76,7 +76,7 @@
                 <span class="absolute left-0 bottom-0 w-0 h-0.5 bg-blue-500 transition-all duration-300 group-hover:w-full"></span>
               </span>
             </a>
-            <a class="font-medium text-gray-600 hover:text-blue-500 transition-colors duration-300 focus:outline-hidden focus:text-blue-500" href="#about">
+            <a class="font-medium text-gray-600 hover:text-blue-500 transition-colors duration-300 focus:outline-hidden focus:text-blue-500" href="/about">
               <span class="relative group">
                 About
                 <span class="absolute left-0 bottom-0 w-0 h-0.5 bg-blue-500 transition-all duration-300 group-hover:w-full"></span>

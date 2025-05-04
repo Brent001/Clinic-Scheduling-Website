@@ -176,6 +176,13 @@
   onDestroy(() => {});
 </script>
 
+<svelte:head>
+  <title>Clinic Schedule - Metro Dagupan Colleges</title>
+  <meta name="description" content="View the clinic schedule for Metro Dagupan Colleges. Find the best time to visit and access quality healthcare services for students, faculty, and staff." />
+  <meta name="keywords" content="Clinic, Metro Dagupan Colleges, Healthcare, Medical Services, Students, Faculty, Staff" />
+  <meta name="author" content="Metro Dagupan Colleges Clinic" />
+</svelte:head>
+
 <style>
   /* Table container for horizontal scrolling */
   .overflow-x-auto {
