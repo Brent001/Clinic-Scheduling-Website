@@ -287,14 +287,26 @@
               </thead>
               <tbody>
                 {#each schedules as schedule}
-                  <tr class="hover:bg-green-50 even:bg-gray-50">
-                    <td class="border border-gray-300 px-2 sm:px-4 py-2">{schedule.purpose}</td>
-                    <td class="border border-gray-300 px-2 sm:px-4 py-2">{formatDateWithDay(schedule.date)}</td>
-                    <td class="border border-gray-300 px-2 sm:px-4 py-2">{formatTimeToAmPm(schedule.time)}</td>
-                  </tr>
-                  <tr class="bg-gray-100">
-                    <td colspan="3" class="border border-gray-300 px-2 sm:px-4 py-4 text-gray-700">
-                      <strong>Message:</strong> {schedule.message}
+                  <!-- Schedule Group -->
+                  <tr class="border border-black">
+                    <td colspan="3" class="p-0">
+                      <!-- Nested Table for Schedule -->
+                      <table class="w-full border-collapse">
+                        <tbody>
+                          <!-- Schedule Row -->
+                          <tr class="hover:bg-green-50 even:bg-gray-50">
+                            <td class="border border-gray-300 px-2 sm:px-4 py-2">{schedule.purpose}</td>
+                            <td class="border border-gray-300 px-2 sm:px-4 py-2">{formatDateWithDay(schedule.date)}</td>
+                            <td class="border border-gray-300 px-2 sm:px-4 py-2">{formatTimeToAmPm(schedule.time)}</td>
+                          </tr>
+                          <!-- Message Row -->
+                          <tr class="bg-gray-100">
+                            <td colspan="3" class="border border-gray-300 px-2 sm:px-4 py-4 text-gray-700">
+                              <strong>Message:</strong> {schedule.message}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </td>
                   </tr>
                 {/each}
