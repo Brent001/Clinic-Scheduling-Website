@@ -58,6 +58,7 @@
 		"bcrypt": "^5.1.1",
 		"drizzle-orm": "^0.40.0",
 		"svelte-icons": "^2.1.0",
-		"uuid": "^11.1.0"
+		"uuid": "^11.1.0",
+		"web-push": "^3.6.7"
 	}
 }

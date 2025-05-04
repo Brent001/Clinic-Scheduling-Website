@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import Navbar from '$lib/components/Navbar.svelte';
   import Footer from '$lib/components/Footer.svelte';
 
@@ -12,6 +12,24 @@
   }
 
   let schedules: Schedule[] = [];
+  let loading = true; // Loading state
+  let notifiedScheduleIds: Set<string> = new Set(); // Track notified schedules
+  let vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || ''; // Use Vite's env variable
+  let pollingInterval: number | undefined; // To store the polling interval ID
+  let initialLoad = true; // Track initial load
+
+  // Load notified schedule IDs from localStorage
+  function loadNotifiedScheduleIds() {
+    const storedIds = localStorage.getItem('notifiedScheduleIds');
+    if (storedIds) {
+      notifiedScheduleIds = new Set(JSON.parse(storedIds));
+    }
+  }
+
+  // Save notified schedule IDs to localStorage
+  function saveNotifiedScheduleIds() {
+    localStorage.setItem('notifiedScheduleIds', JSON.stringify([...notifiedScheduleIds]));
+  }
 
   // Helper function to format time to AM/PM
   function formatTimeToAmPm(time: string): string {
@@ -32,30 +50,130 @@
     return new Date(date).toLocaleDateString('en-US', options);
   }
 
-  // Fetch schedules from the backend and sort them
-  async function fetchSchedules() {
-    try {
-      const response = await fetch('/api/schedules');
-      if (response.ok) {
-        schedules = await response.json();
+  // Show a notification
+  function showNotification(title: string, body: string) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, { body });
+    }
+  }
 
-        // Sort schedules by date and time in descending order
-        schedules.sort((a, b) => {
-          const dateA = new Date(`${a.date}T${a.time}`);
-          const dateB = new Date(`${b.date}T${b.time}`);
-          return dateB.getTime() - dateA.getTime();
-        });
-      } else {
-        console.error('Failed to fetch schedules');
+  // Check for reminders based on date and time
+  function checkForReminders(newSchedules: Schedule[]) {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+
+    newSchedules.forEach((schedule) => {
+      const scheduleDate = schedule.date;
+      const scheduleTime = new Date(`${schedule.date}T${schedule.time}`);
+      const formattedTime = formatTimeToAmPm(schedule.time); // Format the time to AM/PM
+
+      // Notify if the schedule is for today
+      if (scheduleDate === today && !notifiedScheduleIds.has(`${schedule.id}-date`)) {
+        showNotification(
+          `Today's Schedule: ${schedule.purpose}`,
+          `Reminder: "${schedule.purpose}" is scheduled for today at ${formattedTime}.`
+        );
+        notifiedScheduleIds.add(`${schedule.id}-date`); // Mark the date notification as sent
       }
+
+      // Notify if the schedule time has been reached or passed
+      if (scheduleTime <= now && !notifiedScheduleIds.has(`${schedule.id}-time`)) {
+        showNotification(
+          `Schedule Reminder: ${schedule.purpose}`,
+          `The schedule "${schedule.purpose}" is happening now (at ${formattedTime}).`
+        );
+        notifiedScheduleIds.add(`${schedule.id}-time`); // Mark the time notification as sent
+      }
+    });
+
+    // Save the updated notified schedule IDs to localStorage
+    saveNotifiedScheduleIds();
+  }
+
+  // Fetch schedules from the backend and sort them
+  async function fetchSchedules(isAutoRefresh = false) {
+    if (!isAutoRefresh) {
+        loading = true; // Show loading spinner only if not auto-refresh
+    }
+    try {
+        const response = await fetch('/api/schedules');
+        if (response.ok) {
+            const newSchedules = await response.json();
+
+            // Sort schedules by date and time in descending order
+            newSchedules.sort((a: Schedule, b: Schedule) => {
+                const dateA = new Date(`${a.date}T${a.time}`);
+                const dateB = new Date(`${b.date}T${b.time}`);
+                return dateB.getTime() - dateA.getTime();
+            });
+
+            // Check for reminders and update the schedules array
+            checkForReminders(newSchedules);
+            schedules = newSchedules; // Update the schedules array
+        } else {
+            console.error('Failed to fetch schedules');
+        }
     } catch (error) {
-      console.error('Error fetching schedules:', error);
+        console.error('Error fetching schedules:', error);
+    } finally {
+        if (!isAutoRefresh) {
+            loading = false; // Hide loading spinner only if not auto-refresh
+        }
+        initialLoad = false; // Mark initial load as complete
+    }
+  }
+
+  function urlBase64ToUint8Array(base64String: string) {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+  }
+
+  async function registerServiceWorker() {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      try {
+        const registration = await navigator.serviceWorker.register('/service-worker.js');
+        console.log('Service Worker registered:', registration);
+
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        });
+
+        console.log('Push subscription:', subscription);
+
+        // Send subscription to the server
+        await fetch('/api/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(subscription),
+        });
+      } catch (error) {
+        console.error('Error registering service worker or subscribing to push notifications:', error);
+      }
+    } else {
+      console.warn('Push notifications are not supported in this browser.');
     }
   }
 
   onMount(() => {
-    fetchSchedules();
+    // Load previously notified schedule IDs
+    loadNotifiedScheduleIds();
+
+    Notification.requestPermission().then((permission) => {
+        if (permission === 'granted') {
+            console.log('Notification permission granted.');
+        } else {
+            console.warn('Notification permission denied.');
+        }
+    });
+
+    fetchSchedules(); // Fetch schedules once when the component is mounted
+    registerServiceWorker(); // Register service worker for push notifications
   });
+
+  onDestroy(() => {});
 </script>
 
 <style>
@@ -128,60 +246,60 @@
     <div class="max-w-full sm:max-w-6xl mx-auto bg-white rounded-lg shadow-md p-2 sm:p-6">
       <h2 class="text-xl sm:text-2xl font-semibold text-green-800 mb-4">Operating Hours</h2>
       <div class="overflow-x-auto">
-        {#if schedules.length > 0}
-          <table class="w-full border-collapse border border-gray-300 text-left text-sm sm:text-base">
-            <thead>
-              <tr class="bg-green-100">
-                <th class="border border-gray-300 px-2 sm:px-4 py-2 text-green-700">Purpose</th>
-                <th class="border border-gray-300 px-2 sm:px-4 py-2 text-green-700">Date</th>
-                <th class="border border-gray-300 px-2 sm:px-4 py-2 text-green-700">Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {#each schedules as schedule}
-                <!-- Schedule Group -->
-                <tr class="border border-black">
-                  <td colspan="3" class="p-0">
-                    <!-- Schedule Row -->
-                    <table class="w-full border-collapse">
-                      <tbody>
-                        <tr class="hover:bg-green-50 even:bg-gray-50">
-                          <td class="border border-gray-300 px-2 sm:px-4 py-2">{schedule.purpose}</td>
-                          <td class="border border-gray-300 px-2 sm:px-4 py-2">{formatDateWithDay(schedule.date)}</td>
-                          <td class="border border-gray-300 px-2 sm:px-4 py-2">{formatTimeToAmPm(schedule.time)}</td>
-                        </tr>
-                        <!-- Message Row -->
-                        <tr class="bg-gray-100">
-                          <td colspan="3" class="border border-gray-300 px-2 sm:px-4 py-4 text-gray-700">
-                            <strong>Message:</strong> {schedule.message}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
+        {#if loading}
+          <!-- Loading Spinner -->
+          <div role="status" class="flex justify-center items-center py-8">
+            <svg
+              aria-hidden="true"
+              class="w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
+              viewBox="0 0 100 101"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                fill="currentColor"
+              />
+              <path
+                d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                fill="currentFill"
+              />
+            </svg>
+            <span class="sr-only">Loading...</span>
+          </div>
         {:else}
-          <p class="text-center text-gray-700 text-sm sm:text-base py-4">
-            No schedules available at the moment. Please check back later.
-          </p>
+          {#if schedules.length > 0}
+            <!-- Schedule Table -->
+            <table class="w-full border-collapse border border-gray-300 text-left text-sm sm:text-base">
+              <thead>
+                <tr class="bg-green-100">
+                  <th class="border border-gray-300 px-2 sm:px-4 py-2 text-green-700">Purpose</th>
+                  <th class="border border-gray-300 px-2 sm:px-4 py-2 text-green-700">Date</th>
+                  <th class="border border-gray-300 px-2 sm:px-4 py-2 text-green-700">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each schedules as schedule}
+                  <tr class="hover:bg-green-50 even:bg-gray-50">
+                    <td class="border border-gray-300 px-2 sm:px-4 py-2">{schedule.purpose}</td>
+                    <td class="border border-gray-300 px-2 sm:px-4 py-2">{formatDateWithDay(schedule.date)}</td>
+                    <td class="border border-gray-300 px-2 sm:px-4 py-2">{formatTimeToAmPm(schedule.time)}</td>
+                  </tr>
+                  <tr class="bg-gray-100">
+                    <td colspan="3" class="border border-gray-300 px-2 sm:px-4 py-4 text-gray-700">
+                      <strong>Message:</strong> {schedule.message}
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          {:else}
+            <p class="text-center text-gray-700 text-sm sm:text-base py-4">
+              No schedules available at the moment. Please check back later.
+            </p>
+          {/if}
         {/if}
       </div>
-    </div>
-  </section>
-
-  <!-- Additional Information -->
-  <section class="py-8 px-4 sm:py-12 sm:px-6">
-    <div class="max-w-6xl mx-auto bg-green-100 rounded-lg shadow-md p-4 sm:p-6">
-      <h2 class="text-xl sm:text-2xl font-semibold text-green-800 mb-4">Important Reminders</h2>
-      <ul class="list-disc list-inside text-sm sm:text-base text-gray-700 space-y-2">
-        <li>Please bring your student or faculty ID for verification.</li>
-        <li>Walk-ins are welcome, but appointments are encouraged for faster service.</li>
-        <li>Follow health protocols, including wearing a mask and maintaining social distancing.</li>
-        <li>Emergency cases will be prioritized.</li>
-      </ul>
     </div>
   </section>
 
