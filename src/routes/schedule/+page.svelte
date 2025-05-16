@@ -15,7 +15,7 @@
   let loading = true; // Loading state
   let notifiedScheduleIds: Set<string> = new Set(); // Track notified schedules
   let vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || ''; // Use Vite's env variable
-  let pollingInterval: number | undefined; // To store the polling interval ID
+  let pollingInterval: ReturnType<typeof setInterval> | undefined; // To store the polling interval ID
   let initialLoad = true; // Track initial load
 
   // Load notified schedule IDs from localStorage
@@ -170,10 +170,18 @@
     });
 
     fetchSchedules(); // Fetch schedules once when the component is mounted
+
+    // Poll every 10 seconds (adjust as needed)
+    pollingInterval = setInterval(() => {
+      fetchSchedules(true); // Pass true to indicate auto-refresh
+    }, 10000);
+
     registerServiceWorker(); // Register service worker for push notifications
   });
 
-  onDestroy(() => {});
+  onDestroy(() => {
+    if (pollingInterval) clearInterval(pollingInterval);
+  });
 </script>
 
 <svelte:head>
